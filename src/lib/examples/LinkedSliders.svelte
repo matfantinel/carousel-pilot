@@ -58,6 +58,7 @@
 		height: 100vh;
 		z-index: -1;
 		opacity: 0.5;
+		overscroll-behavior-x: contain;
 	}
 
 	.background-track {

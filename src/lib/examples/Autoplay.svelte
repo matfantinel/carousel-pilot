@@ -27,6 +27,7 @@
 	hideScrollbar={true}
 	onautoplay-started={handleAutoplayStarted}
 	onautoplay-stopped={handleAutoplayStopped}
+	loop={true}
 >
 	<ul class="slides" data-carousel-track>
 		<!-- eslint-disable no-unused-vars -->
@@ -61,6 +62,7 @@
 		overflow: auto;
 		margin: 0;
 		padding: 0;
+		overscroll-behavior-x: contain;
 	}
 
 	.slides li {

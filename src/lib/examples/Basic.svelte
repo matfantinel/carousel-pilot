@@ -5,13 +5,14 @@
 		addSpacers = true,
 		hideScrollbar = true,
 		showScrollShadow = true,
-		scrollAmount = 'slide'
+		scrollAmount = 'slide',
+		loop = false,
 	} = $props();
 
 	const totalCount = 10;
 </script>
 
-<carousel-pilot {centered} {addSpacers} {showScrollShadow} {hideScrollbar} {scrollAmount}>
+<carousel-pilot {centered} {addSpacers} {showScrollShadow} {hideScrollbar} {scrollAmount} {loop}>
 	<ul class="slides" class:centered data-carousel-track>
 		<!-- eslint-disable no-unused-vars -->
 		{#each Array(totalCount) as _, i (i)}
@@ -45,6 +46,7 @@
 		overflow: auto;
 		margin: 0;
 		padding: 0;
+		overscroll-behavior-x: contain;
 	}
 
 	.slides li {

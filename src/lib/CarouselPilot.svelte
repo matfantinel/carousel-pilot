@@ -7,6 +7,7 @@
 	let {
 		track: trackSelector = '',
 		centered = false,
+		loop = false,
 		scrollAmount = 'slide',
 		addSpacers = true,
 		showScrollShadow = false,
@@ -136,7 +137,7 @@
 	 * @description keep spacer dimensions in sync when the track or slides change size.
 	 */
 	function updateSpacers() {
-		if (!track) return;
+		if (!track || loop) return;
 
 		removeSpacers();
 		if (!addSpacers) return;
@@ -350,11 +351,11 @@
 		}
 
 		if (prevButton instanceof HTMLButtonElement) {
-			prevButton.disabled = activeIndex === 0;
+			prevButton.disabled = !loop && activeIndex === 0;
 		}
 
 		if (nextButton instanceof HTMLButtonElement) {
-			nextButton.disabled = activeIndex === slides.length - 1;
+			nextButton.disabled = !loop && activeIndex === slides.length - 1;
 		}
 	}
 
@@ -538,19 +539,173 @@
 
 	// #endregion Autoplay
 
+	// #region Infinite Loop
+
+	const CLONE_SCREENS = 3;
+	const SCROLL_END_DEBOUNCE_MS = 300;
+
+	/** @type {number | null} */
+	let loopScrollEndTimeout = null;
+	/** @type {(() => void) | null} */
+	let loopScrollListener = null;
+
+	/*
+	 * @function injectClones
+	 * @description Creates CLONE_SCREENS copies of the slide set on each side of the real slides.
+	 * @description Each clone carries data-carousel-clone-index so teleportToRealIfNeeded can
+	 * @description identify its real counterpart. Clones are purely visual — the IntersectionObserver
+	 * @description ignores them.
+	 */
+	function injectClones() {
+		if (!track || slides.length === 0) return;
+
+		const clonesPerSide = CLONE_SCREENS * slides.length;
+		const firstRealSlide = /** @type {HTMLElement} */ (slides[0]);
+
+		for (let i = 0; i < clonesPerSide; i++) {
+			const clone = slides[i % slides.length].cloneNode(true);
+			if (clone instanceof HTMLElement) {
+				clone.setAttribute('data-carousel-clone', '');
+				clone.setAttribute('data-carousel-clone-index', String(i % slides.length));
+				clone.setAttribute('aria-hidden', 'true');
+				clone.removeAttribute('id');
+			}
+			track.insertBefore(clone, firstRealSlide);
+		}
+
+		for (let i = 0; i < clonesPerSide; i++) {
+			const clone = slides[i % slides.length].cloneNode(true);
+			if (clone instanceof HTMLElement) {
+				clone.setAttribute('data-carousel-clone', '');
+				clone.setAttribute('data-carousel-clone-index', String(i % slides.length));
+				clone.setAttribute('aria-hidden', 'true');
+				clone.removeAttribute('id');
+			}
+			track.appendChild(clone);
+		}
+	}
+
+	/*
+	 * @function removeClones
+	 * @description Removes all injected clone elements.
+	 */
+	function removeClones() {
+		if (!track) return;
+		const clones = Array.from(track.querySelectorAll('[data-carousel-clone]'));
+		for (const clone of clones) clone.remove();
+	}
+
+	/*
+	 * @function findVisibleClone
+	 * @description Returns the clone currently visible in the track viewport.
+	 * @description For centered mode, finds the clone whose rect straddles the track center.
+	 * @description For left-aligned mode, finds the leftmost clone intersecting the track.
+	 * @returns {HTMLElement | null}
+	 */
+	function findVisibleClone() {
+		if (!track) return null;
+		const trackRect = track.getBoundingClientRect();
+		const clones = /** @type {NodeListOf<HTMLElement>} */ (
+			track.querySelectorAll('[data-carousel-clone]')
+		);
+
+		if (centered) {
+			const center = trackRect.left + trackRect.width / 2;
+			for (const clone of clones) {
+				const rect = clone.getBoundingClientRect();
+				if (rect.left <= center && rect.right > center) return clone;
+			}
+		} else {
+			for (const clone of clones) {
+				const rect = clone.getBoundingClientRect();
+				if (rect.right > trackRect.left && rect.left < trackRect.right) return clone;
+			}
+		}
+		return null;
+	}
+
+	/*
+	 * @function teleportToRealIfNeeded
+	 * @description Called after scrolling settles. If no real slide is currently intersecting
+	 * @description (we are in clone territory), finds the visible clone and teleports scrollLeft
+	 * @description by the position delta between that clone and its real slide counterpart.
+	 */
+	function teleportToRealIfNeeded() {
+		if (!track) return;
+
+		const anyRealVisible = intersectionEntries.some((e) => e?.isIntersecting);
+		if (anyRealVisible) return;
+
+		const visibleClone = findVisibleClone();
+		if (!visibleClone) return;
+
+		const cloneIndex = parseInt(visibleClone.getAttribute('data-carousel-clone-index') ?? '0');
+		const realSlide = slides[cloneIndex];
+		if (!realSlide) return;
+
+		const cloneLeft = visibleClone.getBoundingClientRect().left;
+		const realLeft = realSlide.getBoundingClientRect().left;
+		isProgrammaticScroll = true;
+		track.scrollLeft -= cloneLeft - realLeft;
+	}
+
+	/*
+	 * @function handleLoopScroll
+	 * @description Scroll listener for the infinite loop. Debounces teleportToRealIfNeeded so
+	 * @description the teleport only fires once scrolling and CSS snap animation have settled.
+	 */
+	function handleLoopScroll() {
+		if (loopScrollEndTimeout !== null) clearTimeout(loopScrollEndTimeout);
+		loopScrollEndTimeout = window.setTimeout(teleportToRealIfNeeded, SCROLL_END_DEBOUNCE_MS);
+	}
+
+	/*
+	 * @function setupLoop
+	 * @description Injects clones, scrolls to the first real slide, and wires the loop scroll listener.
+	 */
+	function setupLoop() {
+		if (!loop || !track || slides.length === 0) return;
+		cleanupLoop();
+		injectClones();
+		scrollToIndex(0, 'instant');
+		loopScrollListener = handleLoopScroll;
+		track.addEventListener('scroll', loopScrollListener);
+	}
+
+	/*
+	 * @function cleanupLoop
+	 * @description Removes clones and unwires the loop scroll listener.
+	 */
+	function cleanupLoop() {
+		if (loopScrollListener && track) {
+			track.removeEventListener('scroll', loopScrollListener);
+			loopScrollListener = null;
+		}
+		if (loopScrollEndTimeout !== null) {
+			clearTimeout(loopScrollEndTimeout);
+			loopScrollEndTimeout = null;
+		}
+		removeClones();
+	}
+
+	// #endregion Infinite Loop
+
 	// #region Lifecycle
 
 	$effect(() => {
 		wireDom();
 		centered; // recreate observer when mode changes
+		loop; // reinit when loop mode changes
 		setupObserver();
 		recomputeActiveSlide();
+		setupLoop();
 
 		return () => {
 			prevButton?.removeEventListener('click', scrollPrev);
 			nextButton?.removeEventListener('click', scrollNext);
 			cleanupObserver?.();
 			removeSpacers();
+			cleanupLoop();
 			cleanupAutoplay();
 			scrollShadowStyle?.remove();
 			scrollShadowStyle = null;
