@@ -11,7 +11,7 @@
 	}
 
 	const { Story } = defineMeta({
-		title: 'Examples/2. Autoplay',
+		title: '2. Autoplay',
 		component: Autoplay,
 		tags: ['autodocs']
 	});

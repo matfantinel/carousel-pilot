@@ -11,7 +11,7 @@
 	}
 
 	const { Story } = defineMeta({
-		title: 'Examples/3. LinkedSliders',
+		title: '3. LinkedSliders',
 		component: LinkedSliders,
 		tags: ['autodocs']
 	});
