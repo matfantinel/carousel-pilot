@@ -16,6 +16,7 @@
 	},
 	"files": [
 		"dist",
+		"!dist/examples",
 		"!dist/**/*.test.*",
 		"!dist/**/*.spec.*"
 	],

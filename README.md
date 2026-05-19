@@ -1,10 +1,20 @@
-# Carousel Pilot
+# 🎠 Carousel Pilot
 
-A zero-dependency, framework-agnostic carousel/slider web component. You bring the CSS layout — Carousel Pilot handles navigation, active state, autoplay, infinite loop, and scroll tracking on top of your existing scroll container.
+A zero-dependency, framework-agnostic web component that enhances your existing scrollable content with carousel functionality. The Carousel is yours, but Carousel Pilot handles navigation (prev/next), active state, autoplay, infinite loop and scroll tracking.
+
+## Why?
+
+Carousels are hard. You either use a heavy JS-based library or you gotta build things on your own. [CSS scroll snapping](https://fantinel.dev/blog/css-scroll-snapping/) has made it easier to build lightweight carousels, but some functionality like having the slides loop around are still heavily dependent on JS, and notably a pain to implement.
+
+With Carousel Pilot you can have the both of best worlds: the scrolling and snapping is still handled by your CSS, responsive and reliable, but, [if JavaScript is available](https://www.kryogenix.org/code/browser/everyonehasjs.html), you can have Carousel Pilot jump in and add the extra goodies it provides, including a smooth infinite loop experience.
+
+The cost? **17.7kB** (gzipped). It's not the most lightweight option out there, but hopefully it's the most straightforward one to use. I am looking into ways of reducing this in the future.
 
 ## How it works
 
 Carousel Pilot is a [custom element](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements) (`<carousel-pilot>`) that wraps your existing scrollable track. It doesn't impose any layout or styles — you style the track and slides however you want (flexbox, CSS scroll snap, etc.) and Carousel Pilot wires up the behaviour.
+
+It is built with [Svelte 5](https://svelte.dev/), but works with any framework or no framework at all.
 
 ## Installation
 
