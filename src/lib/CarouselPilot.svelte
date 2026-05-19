@@ -14,7 +14,9 @@
 		prev: prevSelector = '',
 		next: nextSelector = '',
 		indicators: indicatorsSelector = '',
-		current: currentSelector = ''
+		current: currentSelector = '',
+		autoplay = false,
+		autoplayDelay = 5000
 	} = $props();
 
 	// #region Global Variables
@@ -43,6 +45,13 @@
 	let scrollShadowStyle = null;
 	/** @type {HTMLStyleElement | null} */
 	let hideScrollbarStyle = null;
+	/** @type {number | null} */
+	let autoplayTimer = null;
+	let autoplayIsRunning = false;
+	let autoplayListenersAdded = false;
+	let isProgrammaticScroll = false;
+	/** @type {number | null} */
+	let scrollTimeout = null;
 
 	// #endregion Global Variables
 
@@ -187,6 +196,20 @@
 
 		prevButton?.addEventListener('click', scrollPrev);
 		nextButton?.addEventListener('click', scrollNext);
+		exposeMethods();
+	}
+
+	/*
+	 * @function exposeMethods
+	 * @description Attaches public API methods (scrollToIndex, scrollNext, scrollPrev)
+	 * @description to the custom element host so outer code can call them.
+	 */
+	function exposeMethods() {
+		if (!host) return;
+		const h = /** @type {any} */ (host);
+		h.scrollToIndex = scrollToIndex;
+		h.scrollNext = scrollNext;
+		h.scrollPrev = scrollPrev;
 	}
 
 	function setupObserver() {
@@ -339,6 +362,32 @@
 
 	// #region Slider navigation
 
+	/*
+	 * @function scrollToIndex
+	 * @description Scrolls the track so the slide at the given index is visible.
+	 * @description For left-aligned mode the slide's left edge aligns with the track's left edge.
+	 * @description For centered mode the slide is centred in the track.
+	 * @param {number} index
+	 * @param {ScrollBehavior} [behavior='smooth']
+	 */
+	function scrollToIndex(/** @type {number} */ index, /** @type {ScrollBehavior} */ behavior = 'smooth') {
+		if (!track || !slides[index]) return;
+		const slide = slides[index];
+		const slideRect = slide.getBoundingClientRect();
+		const trackRect = track.getBoundingClientRect();
+		const relativeLeft = slideRect.left - trackRect.left + track.scrollLeft;
+
+		isProgrammaticScroll = true;
+
+		if (centered) {
+			const slideCenter = relativeLeft + slideRect.width / 2;
+			const trackCenter = track.clientWidth / 2;
+			track.scrollTo({ left: slideCenter - trackCenter, behavior });
+		} else {
+			track.scrollTo({ left: relativeLeft, behavior });
+		}
+	}
+
 	function getScrollDistance() {
 		if (!track) return 0;
 		if (scrollAmount === 'page' || !slides[activeIndex]) {
@@ -347,17 +396,147 @@
 		return slides[activeIndex].getBoundingClientRect().width;
 	}
 
+	/*
+	 * @function scrollPrev
+	 * @description Scrolls the track backwards by one slide (or page) width.
+	 * @description Permanently stops autoplay if it was active.
+	 */
 	function scrollPrev() {
+		stopAutoplay();
 		if (!track) return;
+		isProgrammaticScroll = true;
 		track.scrollBy({ left: -getScrollDistance(), behavior: 'smooth' });
 	}
 
+	/*
+	 * @function scrollNext
+	 * @description Scrolls the track forwards by one slide (or page) width.
+	 * @description Permanently stops autoplay if it was active.
+	 */
 	function scrollNext() {
+		stopAutoplay();
 		if (!track) return;
+		isProgrammaticScroll = true;
 		track.scrollBy({ left: getScrollDistance(), behavior: 'smooth' });
 	}
 
 	// #endregion Slider navigation
+
+	// #region Autoplay
+
+	/*
+	 * @function startAutoplay
+	 * @description Starts the autoplay interval if enabled and not already running.
+	 */
+	function startAutoplay() {
+		if (!autoplay || autoplayIsRunning || !track) return;
+		autoplayIsRunning = true;
+		dispatchAutoplayEvent('autoplay-started', { paused: false });
+		autoplayTimer = window.setInterval(() => {
+			isProgrammaticScroll = true;
+			if (!track) return;
+			track.scrollBy({ left: getScrollDistance(), behavior: 'smooth' });
+		}, autoplayDelay);
+	}
+
+	/*
+	 * @function pauseAutoplay
+	 * @description Pauses the autoplay interval. Can be resumed with startAutoplay.
+	 */
+	function pauseAutoplay() {
+		if (!autoplayIsRunning) return;
+		if (autoplayTimer !== null) {
+			clearInterval(autoplayTimer);
+		}
+		autoplayTimer = null;
+		autoplayIsRunning = false;
+		dispatchAutoplayEvent('autoplay-stopped', { paused: true });
+	}
+
+	/*
+	 * @function stopAutoplay
+	 * @description Permanently stops autoplay and disables it.
+	 */
+	function stopAutoplay() {
+		if (autoplayTimer !== null) {
+			clearInterval(autoplayTimer);
+			autoplayTimer = null;
+		}
+		if (autoplay) {
+			autoplayIsRunning = false;
+			dispatchAutoplayEvent('autoplay-stopped', { paused: false });
+		}
+		autoplay = false;
+	}
+
+	/*
+	 * @function dispatchAutoplayEvent
+	 * @param {string} name
+	 * @param {{ paused: boolean }} detail
+	 */
+	function dispatchAutoplayEvent(/** @type {string} */ name, /** @type {{ paused: boolean }} */ detail) {
+		const event = new CustomEvent(name, {
+			detail,
+			bubbles: true,
+			composed: true
+		});
+		host?.dispatchEvent(event);
+	}
+
+	/*
+	 * @function handleTrackScroll
+	 * @description Scroll listener on the track. Debounced: only evaluates once scrolling has
+	 * @description settled. Stops autoplay if the scroll was user-initiated.
+	 */
+	function handleTrackScroll() {
+		if (scrollTimeout !== null) {
+			clearTimeout(scrollTimeout);
+		}
+		scrollTimeout = window.setTimeout(() => {
+			if (!isProgrammaticScroll) {
+				stopAutoplay();
+			}
+			isProgrammaticScroll = false;
+			scrollTimeout = null;
+		}, 150);
+	}
+
+	/*
+	 * @function setupAutoplay
+	 * @description Sets up autoplay listeners (hover, scroll) and starts the interval.
+	 */
+	function setupAutoplay() {
+		if (!autoplay || !host || !track || autoplayListenersAdded) return;
+		autoplayListenersAdded = true;
+		host.addEventListener('mouseenter', pauseAutoplay);
+		host.addEventListener('mouseleave', startAutoplay);
+		track.addEventListener('scroll', handleTrackScroll);
+		startAutoplay();
+	}
+
+	/*
+	 * @function cleanupAutoplay
+	 * @description Removes autoplay listeners and clears the interval.
+	 */
+	function cleanupAutoplay() {
+		if (autoplayTimer !== null) {
+			clearInterval(autoplayTimer);
+		}
+		autoplayTimer = null;
+		autoplayIsRunning = false;
+		if (scrollTimeout !== null) {
+			clearTimeout(scrollTimeout);
+			scrollTimeout = null;
+		}
+		if (autoplayListenersAdded) {
+			autoplayListenersAdded = false;
+			host?.removeEventListener('mouseenter', pauseAutoplay);
+			host?.removeEventListener('mouseleave', startAutoplay);
+			track?.removeEventListener('scroll', handleTrackScroll);
+		}
+	}
+
+	// #endregion Autoplay
 
 	// #region Lifecycle
 
@@ -372,10 +551,17 @@
 			nextButton?.removeEventListener('click', scrollNext);
 			cleanupObserver?.();
 			removeSpacers();
+			cleanupAutoplay();
 			scrollShadowStyle?.remove();
 			scrollShadowStyle = null;
 			hideScrollbarStyle?.remove();
 			hideScrollbarStyle = null;
+			if (host) {
+				const h = /** @type {any} */ (host);
+				delete h.scrollToIndex;
+				delete h.scrollNext;
+				delete h.scrollPrev;
+			}
 		};
 	});
 
@@ -393,7 +579,17 @@
 		hideScrollbar; // dependency
 		updateHideScrollbar();
 	});
-	
+
+	$effect(() => {
+		autoplay;
+		autoplayDelay;
+		if (autoplay) {
+			setupAutoplay();
+		} else {
+			cleanupAutoplay();
+		}
+	});
+
 	// #endregion Lifecycle
 
 </script>
