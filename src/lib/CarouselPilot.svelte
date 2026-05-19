@@ -17,7 +17,9 @@
 		indicators: indicatorsSelector = '',
 		current: currentSelector = '',
 		autoplay = false,
-		autoplayDelay = 5000
+		autoplayDelay = 5000,
+		headingClasses = 'h1, h2, h3, h4, h5, h6',
+		dedupeHeadings = true
 	} = $props();
 
 	// #region Global Variables
@@ -550,6 +552,29 @@
 	let loopScrollListener = null;
 
 	/*
+	 * @function degradeHeadings
+	 * @description Replaces every heading element inside a clone with a <div> that carries the
+	 * @description same innerHTML and className. If the headingClasses prop is set, an extra
+	 * @description level-specific class is appended (index 0 → h1, index 1 → h2, …).
+	 * @description This prevents duplicate heading tags from polluting the document outline.
+	 * @param {HTMLElement} clone
+	 */
+	function degradeHeadings(/** @type {HTMLElement} */ clone) {
+		const headings = clone.querySelectorAll('h1, h2, h3, h4, h5, h6');
+		const levelClasses = headingClasses ? headingClasses.split(',').map((c) => c.trim()) : [];
+		for (const heading of headings) {
+			const div = document.createElement('div');
+			div.innerHTML = heading.innerHTML;
+			div.className = heading.className;
+			const level = parseInt(heading.tagName[1], 10) - 1;
+			if (levelClasses[level]) {
+				div.className += (div.className ? ' ' : '') + levelClasses[level];
+			}
+			heading.replaceWith(div);
+		}
+	}
+
+	/*
 	 * @function injectClones
 	 * @description Creates CLONE_SCREENS copies of the slide set on each side of the real slides.
 	 * @description Each clone carries data-carousel-clone-index so teleportToRealIfNeeded can
@@ -565,6 +590,7 @@
 		for (let i = 0; i < clonesPerSide; i++) {
 			const clone = slides[i % slides.length].cloneNode(true);
 			if (clone instanceof HTMLElement) {
+				if (dedupeHeadings) degradeHeadings(clone);
 				clone.setAttribute('data-carousel-clone', '');
 				clone.setAttribute('data-carousel-clone-index', String(i % slides.length));
 				clone.setAttribute('aria-hidden', 'true');
@@ -576,6 +602,7 @@
 		for (let i = 0; i < clonesPerSide; i++) {
 			const clone = slides[i % slides.length].cloneNode(true);
 			if (clone instanceof HTMLElement) {
+				if (dedupeHeadings) degradeHeadings(clone);
 				clone.setAttribute('data-carousel-clone', '');
 				clone.setAttribute('data-carousel-clone-index', String(i % slides.length));
 				clone.setAttribute('aria-hidden', 'true');
