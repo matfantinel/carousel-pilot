@@ -10,7 +10,7 @@ Carousels are hard. You either use a heavy JS-based library or you gotta build t
 
 With Carousel Pilot you can have the both of best worlds: the scrolling and snapping is still handled by your CSS, responsive and reliable, but, [if JavaScript is available](https://www.kryogenix.org/code/browser/everyonehasjs.html), you can have Carousel Pilot jump in and add the extra goodies it provides, including a smooth infinite loop experience.
 
-The cost? **17.7kB** (gzipped). It's not the most lightweight option out there, but hopefully it's the most straightforward one to use. I am looking into ways of reducing this in the future.
+The cost? **17.7kB** (gzipped). It's not the most lightweight option out there, but hopefully it's the most straightforward one to use.
 
 ## How it works
 
@@ -175,14 +175,6 @@ npm run storybook
 Storybook will start at **http://localhost:6006**.
 
 ## Building & publishing
-
-There's a single command in `package.json` that handles both building and publishing:
-
-```bash
-npm run publish-to-npm
-```
-
-Or alternatively run both commands separately:
 
 Build both the Svelte library distribution and the standalone bundle:
 

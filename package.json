@@ -21,8 +21,7 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"storybook": "storybook dev -p 6006",
-		"build-storybook": "storybook build",
-		"publish-to-npm": "npm run prepack && npm publish"
+		"build-storybook": "storybook build"
 	},
 	"files": [
 		"dist",
