@@ -1,65 +1,181 @@
-# Svelte library
+# Carousel Pilot
 
-Everything you need to build a Svelte library, powered by [`sv`](https://npmjs.com/package/sv).
+A zero-dependency, framework-agnostic carousel/slider web component. You bring the CSS layout — Carousel Pilot handles navigation, active state, autoplay, infinite loop, and scroll tracking on top of your existing scroll container.
 
-Read more about creating a library [in the docs](https://svelte.dev/docs/kit/packaging).
+## How it works
 
-## Creating a project
+Carousel Pilot is a [custom element](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements) (`<carousel-pilot>`) that wraps your existing scrollable track. It doesn't impose any layout or styles — you style the track and slides however you want (flexbox, CSS scroll snap, etc.) and Carousel Pilot wires up the behaviour.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Installation
 
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+```bash
+npm install carousel-pilot
 ```
 
-To recreate this project with the same configuration:
+## Usage
 
-```sh
-# recreate this project
-npx sv@0.15.3 create --template library --types jsdoc --add prettier eslint storybook --install npm carousel-pilot
+### With a bundler (Vite, Webpack, Rollup, etc.)
+
+Import once anywhere in your app — this registers the custom element globally:
+
+```js
+import 'carousel-pilot';
 ```
 
-## Developing
+### In a Svelte project
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+```js
+import 'carousel-pilot';
+// or, to use the Svelte component directly:
+import { CarouselPilot } from 'carousel-pilot';
 ```
 
-Everything inside `src/lib` is part of your library, everything inside `src/routes` can be used as a showcase or preview app.
+### Via CDN / plain HTML
 
-## Building
-
-To build your library:
-
-```sh
-npm pack
+```html
+<script type="module" src="https://unpkg.com/carousel-pilot/dist/carousel-pilot.js"></script>
 ```
 
-To create a production version of your showcase app:
+## Basic example
 
-```sh
-npm run build
+The only required piece is a scrollable track element marked with `data-carousel-track`. Everything else is optional.
+
+```html
+<carousel-pilot>
+  <ul data-carousel-track>
+    <li>Slide 1</li>
+    <li>Slide 2</li>
+    <li>Slide 3</li>
+  </ul>
+
+  <!-- Optional navigation -->
+  <button data-carousel-prev>Prev</button>
+  <span>Slide <span data-carousel-currentIndex>1</span> of 3</span>
+  <button data-carousel-next>Next</button>
+</carousel-pilot>
 ```
 
-You can preview the production build with `npm run preview`.
+You are responsible for the track's CSS layout. A typical setup with CSS scroll snap:
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```css
+[data-carousel-track] {
+  display: flex;
+  gap: 1rem;
+  overflow: auto;
+  scroll-snap-type: x mandatory;
+}
 
-## Publishing
+[data-carousel-track] > li {
+  flex: 0 0 300px;
+  scroll-snap-align: start;
+}
+```
 
-Go into the `package.json` and give your package the desired name through the `"name"` option. Also consider adding a `"license"` field and point it to a `LICENSE` file which you can create from a template (one popular option is the [MIT license](https://opensource.org/license/mit/)).
+## Slot conventions
 
-To publish your library to [npm](https://www.npmjs.com):
+Mark elements inside `<carousel-pilot>` with these data attributes to connect them:
 
-```sh
+| Attribute | Role |
+|---|---|
+| `data-carousel-track` | The scrollable slide container (required) |
+| `data-carousel-prev` | Button to scroll to the previous slide |
+| `data-carousel-next` | Button to scroll to the next slide |
+| `data-carousel-indicator` | Repeated indicator elements (e.g. dots); the active one gets an `active` class |
+| `data-carousel-currentIndex` | Element whose text content is updated with the current slide number (1-based) |
+
+## Props
+
+### Selectors
+
+These props accept a CSS selector string. Each one falls back to its corresponding `data-*` attribute if left empty.
+
+| Prop | Default fallback | Description |
+|---|---|---|
+| `track` | `[data-carousel-track]` | The scrollable slide container. Required. |
+| `prev` | `[data-carousel-prev]` | Button to scroll to the previous slide. |
+| `next` | `[data-carousel-next]` | Button to scroll to the next slide. |
+| `indicators` | `[data-carousel-indicator]` | Repeated indicator elements (e.g. dots). The active one receives an `active` class. |
+| `current` | `[data-carousel-currentIndex]` | Element whose text content is set to the current slide number (1-based). |
+
+### Behaviour
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `centered` | `boolean` | `false` | Centers the active slide in the track. Use `scroll-snap-align: center` on slides when enabled. |
+| `scrollAmount` | `'slide' \| 'page'` | `'slide'` | How far prev/next scroll. `'slide'` uses the active slide's width; `'page'` uses the track's full width. |
+
+### CSS injection
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `addSpacers` | `boolean` | `true` | Injects invisible spacer elements so the first and last slides can be scrolled flush to the edge (or center when `centered` is on). |
+| `showScrollShadow` | `boolean` | `false` | Injects a CSS scroll shadow on the track to hint that more content is scrollable. |
+| `hideScrollbar` | `boolean` | `false` | Hides the track's scrollbar via injected CSS. |
+
+### Autoplay
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `autoplay` | `boolean` | `false` | Automatically advances slides on an interval. Pauses on hover, stops permanently on manual scroll or prev/next interaction. |
+| `autoplayDelay` | `number` | `5000` | Interval in milliseconds between autoplay advances. |
+
+### Loop
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `loop` | `boolean` | `false` | Enables infinite looping by cloning slides on each side of the track. |
+| `dedupeHeadings` | `boolean` | `true` | Replaces heading elements inside cloned slides with `<div>`s to prevent duplicate headings in the document outline. |
+| `headingClasses` | `string` | `'h1, h2, h3, h4, h5, h6'` | Comma-separated class names applied to heading replacements in clones (index 0 → h1 class, 1 → h2, etc.). |
+
+## JavaScript API
+
+```js
+const carousel = document.querySelector('carousel-pilot');
+
+carousel.scrollToIndex(2);       // scroll to a specific slide (0-based)
+carousel.scrollNext();           // scroll forward one slide
+carousel.scrollPrev();           // scroll backward one slide
+```
+
+## Events
+
+```js
+carousel.addEventListener('slide-change', (e) => {
+  console.log(e.detail.index); // 0-based index of the new active slide
+  console.log(e.detail.total); // total number of slides
+});
+
+carousel.addEventListener('autoplay-started', () => { /* ... */ });
+carousel.addEventListener('autoplay-stopped', (e) => {
+  console.log(e.detail.paused); // true = paused (hovering), false = stopped permanently
+});
+```
+
+## Development
+
+The project uses [Storybook](https://storybook.js.org/) for local development. Example components live in `src/lib/examples/`.
+
+```bash
+npm install
+npm run storybook
+```
+
+Storybook will start at **http://localhost:6006**.
+
+## Building & publishing
+
+Build both the Svelte library distribution and the standalone bundle:
+
+```bash
+npm run prepack
+```
+
+This runs `svelte-package` (for Svelte users) and a Vite library build (for everyone else), then validates the output with `publint`. Both outputs land in `dist/`.
+
+Publish to npm:
+
+```bash
 npm publish
 ```
+
+Make sure you've updated the `version` field in `package.json` before publishing.

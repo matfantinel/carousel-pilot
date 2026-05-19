@@ -180,10 +180,16 @@
 	function wireDom() {
 		const root = wrapper?.getRootNode();
 		host = root instanceof ShadowRoot ? /** @type {HTMLElement} */ (root.host) : null;
-		if (!host) return;
+		if (!host) {
+			console.error('CarouselPilot: Could not find host element');
+			return;
+		}
 
 		track = queryElement(host, trackSelector, '[data-carousel-track]');
-		if (!track) return;
+		if (!track) {
+			console.error('CarouselPilot: Could not find track element. Define it with data-carousel-track attribute or pass a trackSelector prop.');
+			return;
+		}
 
 		updateSpacers();
 
