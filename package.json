@@ -1,6 +1,7 @@
 {
 	"name": "carousel-pilot",
-	"version": "0.0.1",
+	"version": "0.0.2",
+	"description": "Enhance any CSS scroll snap carousel with prev/next navigation, autoplay, and infinite looping — no framework required.",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run prepack",
@@ -12,7 +13,8 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"storybook": "storybook dev -p 6006",
-		"build-storybook": "storybook build"
+		"build-storybook": "storybook build",
+		"publish-to-npm": "npm run prepack && npm publish"
 	},
 	"files": [
 		"dist",

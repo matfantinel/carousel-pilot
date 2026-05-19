@@ -176,6 +176,14 @@ Storybook will start at **http://localhost:6006**.
 
 ## Building & publishing
 
+There's a single command in `package.json` that handles both building and publishing:
+
+```bash
+npm run publish-to-npm
+```
+
+Or alternatively run both commands separately:
+
 Build both the Svelte library distribution and the standalone bundle:
 
 ```bash
