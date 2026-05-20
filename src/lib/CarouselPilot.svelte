@@ -206,6 +206,14 @@
 		prevButton?.addEventListener('click', scrollPrev);
 		nextButton?.addEventListener('click', scrollNext);
 		exposeMethods();
+
+		// Force scroll to the first slide
+		// This is because Safari has a bug where scroll-snap and container queries conflict
+		// Resulting in a seemingly random slide being shown on page load.
+		// https://devcodef1.com/news/1227800/safari-s-unpredictable-css-snap-behavior
+		setTimeout(() => {
+			scrollToIndex(0, 'instant');
+		}, 10);
 	}
 
 	/*
