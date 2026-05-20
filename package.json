@@ -1,6 +1,6 @@
 {
 	"name": "carousel-pilot",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "Enhance any CSS scroll snap carousel with prev/next navigation, autoplay, and infinite looping — no framework required.",
 	"author": "Matheus Fantinel <matt@fantinel.dev> (https://fantinel.dev)",
 	"homepage": "https://github.com/matfantinel/carousel-pilot",
