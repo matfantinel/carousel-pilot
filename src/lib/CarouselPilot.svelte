@@ -44,6 +44,8 @@
 	let spacerElements = [];
 	/** @type {ResizeObserver | null} */
 	let resizeObserver = null;
+	/** @type {ResizeObserver | null} */
+	let trackVisibilityObserver = null;
 	/** @type {HTMLStyleElement | null} */
 	let scrollShadowStyle = null;
 	/** @type {HTMLStyleElement | null} */
@@ -239,6 +241,23 @@
 		};
 
 		if (centered) {
+			if (track.clientWidth <= 2) {
+				if (!trackVisibilityObserver) {
+					trackVisibilityObserver = new ResizeObserver((entries) => {
+						for (const entry of entries) {
+							if (entry.contentRect.width > 2) {
+								trackVisibilityObserver?.disconnect();
+								trackVisibilityObserver = null;
+								setupObserver();
+								return;
+							}
+						}
+					});
+					trackVisibilityObserver.observe(track);
+				}
+				return;
+			}
+
 			// Centered will have only a tiny strip in the center that counts as "visible"
 			const inset = (track.clientWidth - 2) / 2;
 			options = {
@@ -745,6 +764,8 @@
 			prevButton?.removeEventListener('click', scrollPrev);
 			nextButton?.removeEventListener('click', scrollNext);
 			cleanupObserver?.();
+			trackVisibilityObserver?.disconnect();
+			trackVisibilityObserver = null;
 			removeSpacers();
 			cleanupLoop();
 			cleanupAutoplay();
