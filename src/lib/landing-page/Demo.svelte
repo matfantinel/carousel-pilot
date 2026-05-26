@@ -1,5 +1,5 @@
 <script>
-	import 'carousel-pilot';
+	import '../CarouselPilot.svelte';
 
 	// Behavior
 	let centered = $state(true);
