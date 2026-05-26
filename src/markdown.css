@@ -1,0 +1,84 @@
+.u-markdown {
+	display: flex;
+	flex-direction: column;
+	gap: 1.8rem;
+}
+
+.u-markdown picture {
+	display: inline;
+}
+
+.u-markdown img {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	max-width: 100%;
+	height: auto;
+	width: auto;
+}
+
+.u-markdown img + figcaption {
+	margin-top: 16px;
+}
+
+.u-markdown .no-shadow > img {
+	box-shadow: none;
+}
+
+.u-markdown figcaption {
+	font-size: 0.85rem;
+	text-align: center;
+	opacity: 0.9;
+}
+
+.u-markdown p:empty {
+	display: none;
+}
+
+.u-markdown p:empty + .a-image img {
+	margin-top: 0;
+}
+
+.u-markdown ul,
+.u-markdown ol {
+	margin: 0 0 0 32px;
+}
+
+.u-markdown h1:not(:first-child),
+.u-markdown h2:not(:first-child),
+.u-markdown h3:not(:first-child),
+.u-markdown h4:not(:first-child),
+.u-markdown h5:not(:first-child) {
+	margin-top: 24px;
+}
+
+.u-markdown em,
+.u-markdown i {
+	letter-spacing: -0.25px;
+	font-style: normal;
+}
+
+.u-markdown table {
+	border-collapse: collapse;
+	border-radius: 6px;
+
+	display: block;
+	max-width: 100%;
+	overflow: auto;
+}
+
+.u-markdown td,
+.u-markdown th {
+	padding: 4px 8px;
+	border: 1px solid var(--border-color);
+}
+
+.u-markdown th {
+	background: var(--bg-accent-color);
+}
+
+.u-markdown code:not([class^='language-']) {
+	background: var(--bg-accent-color);
+	padding: 4px 8px;
+	border-radius: 6px;
+}

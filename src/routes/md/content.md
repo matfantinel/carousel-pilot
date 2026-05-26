@@ -1,9 +1,3 @@
-# 🎠 Carousel Pilot
-
-[![npm version](https://badge.fury.io/js/carousel-pilot.svg)](//npmjs.com/package/carousel-pilot)
-
-A zero-dependency, framework-agnostic web component that enhances your existing scrollable content with carousel functionality. The Carousel is yours, but Carousel Pilot handles navigation (prev/next), active state, autoplay, infinite loop and scroll tracking.
-
 ## Why?
 
 Carousels are hard. You either use a heavy JS-based library or you gotta build things on your own. [CSS scroll snapping](https://fantinel.dev/blog/css-scroll-snapping/) has made it easier to build lightweight carousels, but some functionality like having the slides loop around are still heavily dependent on JS, and notably a pain to implement.
@@ -20,11 +14,11 @@ It is built with [Svelte 5](https://svelte.dev/), but works with any framework o
 
 ## Installation
 
+### With NPM
+
 ```bash
 npm install carousel-pilot
 ```
-
-## Usage
 
 ### With a bundler (Vite, Webpack, Rollup, etc.)
 
@@ -48,7 +42,9 @@ import { CarouselPilot } from 'carousel-pilot';
 <script type="module" src="https://unpkg.com/carousel-pilot/dist/carousel-pilot.js"></script>
 ```
 
-## Basic example
+## Usage Docs
+
+### Basic example
 
 The only required piece is a scrollable track element marked with `data-carousel-track`. Everything else is optional.
 
@@ -83,7 +79,7 @@ You are responsible for the track's CSS layout. A typical setup with CSS scroll 
 }
 ```
 
-## Slot conventions
+### Slot conventions
 
 Mark elements inside `<carousel-pilot>` with these data attributes to connect them:
 
@@ -95,9 +91,9 @@ Mark elements inside `<carousel-pilot>` with these data attributes to connect th
 | `data-carousel-indicator` | Repeated indicator elements (e.g. dots); the active one gets an `active` class |
 | `data-carousel-currentIndex` | Element whose text content is updated with the current slide number (1-based) |
 
-## Props
+### Props
 
-### Selectors
+#### Selectors
 
 These props accept a CSS selector string. Each one falls back to its corresponding `data-*` attribute if left empty.
 
@@ -109,14 +105,14 @@ These props accept a CSS selector string. Each one falls back to its correspondi
 | `indicators` | `[data-carousel-indicator]` | Repeated indicator elements (e.g. dots). The active one receives an `active` class. |
 | `current` | `[data-carousel-currentIndex]` | Element whose text content is set to the current slide number (1-based). |
 
-### Behavior
+#### Behavior
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `centered` | `boolean` | `false` | Centers the active slide in the track. Use `scroll-snap-align: center` on slides when enabled. |
 | `scrollAmount` | `'slide' \| 'page'` | `'slide'` | How far prev/next scroll. `'slide'` uses the active slide's width; `'page'` uses the track's full width. |
 
-### CSS injection
+#### CSS injection
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
@@ -124,14 +120,14 @@ These props accept a CSS selector string. Each one falls back to its correspondi
 | `showScrollShadow` | `boolean` | `false` | Injects a CSS scroll shadow on the track to hint that more content is scrollable. |
 | `hideScrollbar` | `boolean` | `false` | Hides the track's scrollbar via injected CSS. |
 
-### Autoplay
+#### Autoplay
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `autoplay` | `boolean` | `false` | Automatically advances slides on an interval. Pauses on hover, stops permanently on manual scroll or prev/next interaction. |
 | `autoplayDelay` | `number` | `5000` | Interval in milliseconds between autoplay advances. |
 
-### Loop
+#### Loop
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
@@ -139,7 +135,7 @@ These props accept a CSS selector string. Each one falls back to its correspondi
 | `dedupeHeadings` | `boolean` | `true` | Replaces heading elements inside cloned slides with `<div>`s to prevent duplicate headings in the document outline. |
 | `headingClasses` | `string` | `'h1, h2, h3, h4, h5, h6'` | Comma-separated class names applied to heading replacements in clones (index 0 → h1 class, 1 → h2, etc.). |
 
-## JavaScript API
+### JavaScript API
 
 ```js
 const carousel = document.querySelector('carousel-pilot');
@@ -149,7 +145,7 @@ carousel.scrollNext();           // scroll forward one slide
 carousel.scrollPrev();           // scroll backward one slide
 ```
 
-## Events
+### Events
 
 ```js
 carousel.addEventListener('slide-change', (e) => {
@@ -162,32 +158,3 @@ carousel.addEventListener('autoplay-stopped', (e) => {
   console.log(e.detail.paused); // true = paused (hovering), false = stopped permanently
 });
 ```
-
-## Development
-
-The project uses [Storybook](https://storybook.js.org/) for local development. Example components live in `src/lib/examples/`.
-
-```bash
-npm install
-npm run storybook
-```
-
-Storybook will start at **http://localhost:6006**.
-
-## Building & publishing
-
-Build both the Svelte library distribution and the standalone bundle:
-
-```bash
-npm run prepack
-```
-
-This runs `svelte-package` (for Svelte users) and a Vite library build (for everyone else), then validates the output with `publint`. Both outputs land in `dist/`.
-
-Publish to npm:
-
-```bash
-npm publish
-```
-
-Make sure you've updated the `version` field in `package.json` before publishing.
