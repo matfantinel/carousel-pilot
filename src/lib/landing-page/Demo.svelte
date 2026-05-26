@@ -1,5 +1,12 @@
 <script>
-	import '../CarouselPilot.svelte';
+	import CarouselPilot from '../CarouselPilot.svelte';
+
+	// Since I'm importing from within the project and not from the package manager
+	// I gotta do this extra step
+	// Actual users shouldn't have to do it
+	if (typeof customElements !== 'undefined' && !customElements.get('carousel-pilot')) {
+		customElements.define('carousel-pilot', /** @type {any} */ (CarouselPilot).element);
+	}
 
 	// Behavior
 	let centered = $state(true);

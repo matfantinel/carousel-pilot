@@ -1,6 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 
+export const prerender = true;
+
 export function load() {
 	const introPath = path.resolve('src/routes/md/intro.md');
 	const contentPath = path.resolve('src/routes/md/content.md');
