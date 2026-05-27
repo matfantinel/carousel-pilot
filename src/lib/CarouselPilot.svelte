@@ -237,7 +237,9 @@
 		let options = {
 			root: track,
 			threshold: 0,
-			rootMargin: '0px 0px 0px 0px'
+			// Adding a negative pixel here so that slides that touch each other (no gap)
+			// Don't trigger the observer at the same pixel, which was breaking active slide detection.
+			rootMargin: '0px -1px 0px -1px'
 		};
 
 		if (centered) {
