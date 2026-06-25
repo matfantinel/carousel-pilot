@@ -4,23 +4,46 @@
 	import { SCROLL_SHADOW_CSS, HIDE_SCROLLBAR_CSS } from './css-utils.js';
 	import { queryElement, queryElements } from './helpers.js';
 
+	/**
+	 * Coerces a prop value to a boolean. Required because custom element
+	 * attributes are always strings, e.g. loop="false" becomes the truthy
+	 * string "false" instead of the boolean false.
+	 * @param {any} value
+	 * @param {boolean} defaultValue
+	 */
+	function toBool(value, defaultValue) {
+		if (value === undefined || value === null) return defaultValue;
+		if (typeof value === 'boolean') return value;
+		if (typeof value === 'string') return value.toLowerCase() !== 'false' && value !== '';
+		return Boolean(value);
+	}
+
 	let {
 		track: trackSelector = '',
-		centered = false,
-		loop = false,
+		centered: _centered = false,
+		loop: _loop = false,
 		scrollAmount = 'slide',
-		addSpacers = true,
-		showScrollShadow = false,
-		hideScrollbar = false,
+		addSpacers: _addSpacers = true,
+		showScrollShadow: _showScrollShadow = false,
+		hideScrollbar: _hideScrollbar = false,
 		prev: prevSelector = '',
 		next: nextSelector = '',
 		indicators: indicatorsSelector = '',
 		current: currentSelector = '',
-		autoplay = false,
+		autoplay: _autoplay = false,
 		autoplayDelay = 5000,
 		headingClasses = 'h1, h2, h3, h4, h5, h6',
-		dedupeHeadings = true
+		dedupeHeadings: _dedupeHeadings = true
 	} = $props();
+
+	let centered = $derived(toBool(_centered, false));
+	let loop = $derived(toBool(_loop, false));
+	let addSpacers = $derived(toBool(_addSpacers, true));
+	let showScrollShadow = $derived(toBool(_showScrollShadow, false));
+	let hideScrollbar = $derived(toBool(_hideScrollbar, false));
+	let autoplayStopped = $state(false);
+	let autoplay = $derived(autoplayStopped ? false : toBool(_autoplay, false));
+	let dedupeHeadings = $derived(toBool(_dedupeHeadings, true));
 
 	// #region Global Variables
 
@@ -504,7 +527,7 @@
 			autoplayIsRunning = false;
 			dispatchAutoplayEvent('autoplay-stopped', { paused: false });
 		}
-		autoplay = false;
+		autoplayStopped = true;
 	}
 
 	/*
