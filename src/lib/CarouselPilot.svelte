@@ -731,7 +731,7 @@
 		const cloneLeft = visibleClone.getBoundingClientRect().left;
 		const realLeft = realSlide.getBoundingClientRect().left;
 		isProgrammaticScroll = true;
-		track.scrollLeft -= cloneLeft - realLeft;
+		track.scrollTo({ left: track.scrollLeft - (cloneLeft - realLeft), behavior: 'instant' });
 	}
 
 	/*
